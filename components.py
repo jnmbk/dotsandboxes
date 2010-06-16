@@ -23,9 +23,10 @@ class Box(QtGui.QGraphicsRectItem):
 
     def set_owner(self, owner):
         self.setBrush(QtGui.QBrush(QtGui.QColor(PlayerColors[owner])))
+        self.owner = owner
 
 class Side(QtGui.QGraphicsLineItem):
-    def __init__(self, orientation, line, part):
+    def __init__(self, orientation, line, part, game):
         if orientation == Orientation.horizontal:
             x1 = part*LINE_SIZE
             y1 = line*LINE_SIZE
@@ -39,7 +40,7 @@ class Side(QtGui.QGraphicsLineItem):
         QtGui.QGraphicsLineItem.__init__(self, x1, y1, x2, y2)
         pen = QtGui.QPen()
         pen.setWidth(4)
-        pen.setColor(QtGui.QColor("lightblue"))
+        pen.setColor(QtGui.QColor("blue"))
         self.setPen(pen)
         self.setAcceptHoverEvents(True)
         self.setAcceptedMouseButtons(QtCore.Qt.LeftButton)
@@ -47,6 +48,7 @@ class Side(QtGui.QGraphicsLineItem):
 
         self.orientation, self.line, self.part = orientation, line, part
         self.is_enabled = False
+        self.game = game
         self.box_list = []
 
     def hoverEnterEvent(self, event):
@@ -65,9 +67,13 @@ class Side(QtGui.QGraphicsLineItem):
         self.setOpacity(0.2)
 
     def mousePressEvent(self, event):
-        if not self.is_enabled:
-            #TODO: user plays turn
+        if not self.is_enabled and self.game.current_player == Player.human:
             self.set_enabled()
+            if not self.game.set_owners(self.box_list, self.game.current_player):
+                #change current_player
+                self.game.current_player = Player.human if self.game.current_player == Player.computer else Player.computer
+            if self.game.current_player == Player.computer:
+                self.game.computer_move()
 
 class Orientation:
     vertical = 0
